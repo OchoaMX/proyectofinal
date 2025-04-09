@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import perfumeRouter from "./router/perfumeRouter.js"; // Importamos el router de perfumes
+import authRouter from "./router/loginRouter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,9 +13,9 @@ const app = express();
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views")); // Apunta solo a la carpeta views
 
-// Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middlewares con límites aumentados para imágenes grandes
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/bootstrap", express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
 
@@ -47,6 +48,11 @@ app.get("/productos", (req, res) => {
 app.get("/admin", (req, res) => {
     res.redirect("/perfumes/admin");
 });
+app.get("/panel", (req, res) => {
+    res.render("panel", { titulo: "Contacto" });
+});
+
+app.use('/api', authRouter); // Todas las rutas de auth empezarán con /api
 
 app.listen(80, () => {
     console.log("Servidor corriendo en http://localhost:80");

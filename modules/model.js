@@ -23,7 +23,7 @@ var perfumeDB = {};
 // Función para insertar perfume
 perfumeDB.insertarPerfume = function insertarPerfume(perfume) {
     return new Promise((resolve, reject) => {
-        const sqlConsulta = "INSERT INTO perfumes (num_serie, marca, modelo, descripcion, categoria, precio, url_imagen) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        const sqlConsulta = "INSERT INTO perfumes (num_serie, marca, modelo, descripcion, categoria, precio, imagen_base64) VALUES (?, ?, ?, ?, ?, ?, ?)";
         const valores = [
             perfume.num_serie,
             perfume.marca,
@@ -31,11 +31,8 @@ perfumeDB.insertarPerfume = function insertarPerfume(perfume) {
             perfume.descripcion,
             perfume.categoria,
             perfume.precio,
-            perfume.url_imagen
+            perfume.imagen_base64 // Ahora guardamos el Base64
         ];
-
-        console.log("SQL:", sqlConsulta);
-        console.log("Valores:", valores);
 
         conexion.query(sqlConsulta, valores, (error, resultado) => {
             if (error) {
@@ -47,6 +44,7 @@ perfumeDB.insertarPerfume = function insertarPerfume(perfume) {
         });
     });
 };
+
 
 // Función para mostrar todos los perfumes
 perfumeDB.mostrarPerfumes = function mostrarPerfumes(){
@@ -82,19 +80,16 @@ perfumeDB.buscarPorNumSerie = function buscarPorNumSerie(numSerie){
 // Función para actualizar perfume
 perfumeDB.actualizarPorNumSerie = function actualizarPorNumSerie(numSerie, datosActualizados) {
     return new Promise((resolve, reject) => {
-        const sqlConsulta = "UPDATE perfumes SET marca = ?, modelo = ?, descripcion = ?, categoria = ?, precio = ?, url_imagen = ? WHERE num_serie = ?";
+        const sqlConsulta = "UPDATE perfumes SET marca = ?, modelo = ?, descripcion = ?, categoria = ?, precio = ?, imagen_base64 = ? WHERE num_serie = ?";
         const valores = [
             datosActualizados.marca,
             datosActualizados.modelo,
             datosActualizados.descripcion,
             datosActualizados.categoria,
             datosActualizados.precio,
-            datosActualizados.url_imagen,
+            datosActualizados.imagen_base64, // Actualizamos el Base64
             numSerie
         ];
-
-        console.log("SQL para actualizar:", sqlConsulta);
-        console.log("Valores para actualizar:", valores);
 
         conexion.query(sqlConsulta, valores, (error, resultado) => {
             if (error) {
@@ -124,5 +119,24 @@ perfumeDB.borrarPorNumSerie = function borrarPorNumSerie(numSerie) {
         });
     });
 };
+// Función para buscar usuario por email
+perfumeDB.buscarUsuarioPorEmail = function(email) {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT id, email, password_hash, rol FROM usuarios WHERE email = ?";
+        conexion.query(sql, [email], (error, resultados) => {
+            if (error) {
+                console.error("Error al buscar usuario:", error);
+                reject(error);
+            } else {
+                resolve(resultados[0]); // Devuelve el primer usuario encontrado
+            }
+        });
+    });
+};
 
+// Función para verificar contraseña
+perfumeDB.verificarPassword = function(passwordPlain, passwordHash) {
+    // EN PRODUCCIÓN USA: return bcrypt.compare(passwordPlain, passwordHash);
+    return passwordPlain === passwordHash; // Solo para desarrollo/testing
+};
 export default perfumeDB;

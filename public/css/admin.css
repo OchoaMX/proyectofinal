@@ -141,7 +141,16 @@ body {
   margin-top: 10px;
   color: #86868B;
 }
-
+.imagen-miniatura {
+  max-width: 64px;
+  max-height: 64px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+  object-fit: cover;
+}
 /* Responsive */
 @media screen and (max-width: 600px) {
   .botones {

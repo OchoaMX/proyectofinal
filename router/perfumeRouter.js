@@ -54,7 +54,11 @@ router.post("/", async (req, res) => {
             return res.status(400).json({ error: "Todos los campos son requeridos." });
         }
 
-        console.log("Datos recibidos para insertar:", nuevoPerfume);
+        // Opcional: Validar que el Base64 sea una imagen válida si se proporciona
+        if (nuevoPerfume.imagen_base64 && !nuevoPerfume.imagen_base64.startsWith('data:image')) {
+            return res.status(400).json({ error: "El formato de imagen no es válido." });
+        }
+
         const id = await perfumeDB.insertarPerfume(nuevoPerfume);
         res.status(201).json({ id, message: "Perfume agregado correctamente." });
     } catch (error) {
@@ -62,6 +66,7 @@ router.post("/", async (req, res) => {
         res.status(500).json({ error: error.message || "Error al agregar el perfume." });
     }
 });
+
 
 // Ruta para actualizar un perfume
 router.put("/:numSerie", async (req, res) => {
@@ -76,7 +81,6 @@ router.put("/:numSerie", async (req, res) => {
             return res.status(400).json({ error: "Todos los campos son requeridos para actualizar el perfume." });
         }
 
-        console.log("Datos para actualizar:", datosActualizados);
         const resultado = await perfumeDB.actualizarPorNumSerie(numSerie, datosActualizados);
 
         if (resultado.affectedRows === 0) {
