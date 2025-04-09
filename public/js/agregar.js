@@ -21,6 +21,7 @@ const btnAgregar = document.getElementById('btnAgregar');
 const btnBuscar = document.getElementById('btnBuscar');
 const btnActualizar = document.getElementById('btnActualizar');
 const btnBorrar = document.getElementById('btnBorrar');
+const btnLimpiar = document.getElementById('btnLimpiar');
 
 // Cargar datos al iniciar
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,6 +34,7 @@ btnAgregar.addEventListener('click', agregarPerfume);
 btnBuscar.addEventListener('click', buscarPerfume);
 btnActualizar.addEventListener('click', actualizarPerfume);
 btnBorrar.addEventListener('click', borrarPerfume);
+btnLimpiar.addEventListener('click', limpiarFormulario);
 
 // Manejo de imágenes
 imageInput.addEventListener('change', function() {
@@ -262,8 +264,15 @@ async function agregarPerfume() {
     };
     
     try {
-        // Aquí usamos directamente la URL base, ya que en el router no hay un 
-        // endpoint específico para POST, solo es /perfumes
+        // Primero verificamos si el perfume ya existe
+        const responseCheck = await fetch(`${API_URL}/${nuevoPerfume.num_serie}`);
+        
+        if (responseCheck.ok) {
+            mostrarMensaje('Error: Ya existe un perfume con este número de serie', 'red');
+            return;
+        }
+        
+        // Si no existe, procedemos a agregarlo
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
@@ -282,7 +291,33 @@ async function agregarPerfume() {
         mostrarMensaje('Perfume agregado correctamente', 'green');
     } catch (error) {
         console.error('Error al agregar perfume:', error);
-        mostrarMensaje(`Error: ${error.message}`, 'red');
+        // Si el error es porque no encontró el perfume al verificar (lo cual es esperado)
+        if (error.message.includes('404')) {
+            // Intentamos agregar el perfume de nuevo ya que no existe
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(nuevoPerfume)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+                }
+                
+                await cargarPerfumes();
+                limpiarFormulario();
+                mostrarMensaje('Perfume agregado correctamente', 'green');
+            } catch (addError) {
+                console.error('Error al agregar perfume:', addError);
+                mostrarMensaje(`Error: ${addError.message}`, 'red');
+            }
+        } else {
+            mostrarMensaje(`Error: ${error.message}`, 'red');
+        }
     }
 }
 
