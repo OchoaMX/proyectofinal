@@ -3,7 +3,7 @@ import { rejects } from "assert";
 
 // Configuración de conexión
 var conexion = mysql.createConnection({
-    host: "localhost",
+    host: "127.0.0.1",
     user: "root",
     password: "",
     database: "sistema_perfumes"
