@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto</title>
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/contact.css">
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <%- include("partials/header.ejs") %>
+    <center>
+        <section class="containerform">
+            <div class="card">
+                <form action="https://formsubmit.co/emmanuelle.8a1@gmail.com" method="POST">
+                    <label for=""><strong>Nombre</strong></label>
+                    <input type="text" name="Nombre" placeholder="Teclea tu nombre" required>
+                    <br><br>
+                    <label for=""><strong>Email Address</strong></label>
+                    <input type="email" name="Email" id="idEmail" placeholder="Teclea tu Email" required>
+                    <br><br>
+                    <label for=""><strong>Telefono</strong></label>
+                    <input type="number" name="Concrete Quantity" id="idQuantity" placeholder="Teclea tu numero"
+                        required>
+                    <br><br>
+                    <textarea name="Message" id="" cols="40" rows="10"
+                        placeholder="Aqui puedes agregar cualquier queja o sugerencia"></textarea>
+                    <br><br>
+
+                    <button class="boton1" type="submit">Enviar</button>
+                    <button class="boton1" type="reset">Limpiar</button>
+
+                </form>
+            </div>
+        </section>
+    </center>
+    <%- include("partials/footer.ejs") %>
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración de Perfumes</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <header class="encabezado">
+        <h1>Panel de Administración de Perfumes</h1>
+        <nav>
+            <a href="/index.html">Salir</a>
+            <a href="/html/inicio.html">Catálogo</a>
+        </nav>
+    </header>
+
+    <div class="contenedor-principal">
+        <div class="contenedor-formulario">
+            <form id="formularioProductos">
+                <h2>Registro de Perfumes</h2>
+                
+                <label for="txtNumSerie">Número de Serie:</label>
+                <input type="text" id="txtNumSerie" name="txtNumSerie" required>
+                
+                <label for="txtMarca">Marca:</label>
+                <input type="text" id="txtMarca" name="txtMarca" required>
+                
+                <label for="txtModelo">Modelo:</label>
+                <input type="text" id="txtModelo" name="txtModelo" required>
+                
+                <label for="txtDescripcion">Descripción:</label>
+                <textarea id="txtDescripcion" name="txtDescripcion" rows="3" required></textarea>
+                
+                <label for="txtCategoria">Categoría:</label>
+                <select id="txtCategoria" name="txtCategoria" required>
+                    <option value="">Seleccionar Categoría</option>
+                    <option value="Hombre">Hombre</option>
+                    <option value="Mujer">Mujer</option>
+                    <option value="Unisex">Unisex</option>
+                    <option value="Niños">Niños</option>
+                </select>
+                
+                <label for="txtPrecio">Precio:</label>
+                <input type="number" id="txtPrecio" name="txtPrecio" min="0" step="0.01" required>
+                
+                <label for="txtUrl">URL Imagen:</label>
+                <input type="text" id="txtUrl" name="txtUrl" readonly>
+                
+                <input class="subirArchivo" type="file" id="imageInput" accept="image/*">
+                
+                <p id="mensaje" style="text-align: center; color: red;"></p>
+
+                <div class="botones">
+                    <button type="button" id="btnAgregar">Agregar</button>
+                    <button type="button" id="btnBuscar">Buscar</button>
+                    <button type="button" id="btnActualizar">Actualizar</button>
+                    <button type="button" id="btnBorrar">Borrar</button>
+                    <button type="reset">Limpiar</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="contenedor-tabla">
+            <h2>Inventario de Perfumes</h2>
+            <table id="tablaProductos">
+                <thead>
+                    <tr>
+                        <th>Serie</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Descripción</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Imagen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="/js/agregar.js"></script>
+</body>
+</html>

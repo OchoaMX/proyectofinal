@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagina</title>
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="menu container">
+            <a href="#" class="logo">Platinum</a>
+            <input type="checkbox" id="menu"/>
+            <label for="menu">
+                <img src="Imagenes/menu.png" class="menu-icono" alt="menu">
+            </label>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/nosotros">Inicio</a></li>
+                    <li><a href="/productos">Productos</a></li>
+                    <a href="/contacto"><button id="boton-c">Contactanos</button></a>
+                    <a href="/"><button id="boton-c">Iniciar sesion</button></a>
+                </ul>
+            </nav>
+        </div>
+        <div class="header-content conteiner">
+            <div class="header-txt">
+                <h1>Platinum Perfumes</h1>
+                <h4>Las Mejores Marcas A Bajos Precios</h4>
+                <li><a href="/contacto"><button id="boton-c" class="boton-c boton-m">Contactanos</button></a></li>
+            </div>
+        </div>
+    </header>
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <h3>+1000</h3>
+                    <p>Clientes Satisfechos</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-globe"></i>
+                    <h3>15</h3>
+                    <p>Países</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-certificate"></i>
+                    <h3>10</h3>
+                    <p>Años de Experiencia</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <h3>+400</h3>
+                    <p>Marcas</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <%- include("partials/footer.ejs") %>
+
+</body>
+</html>
