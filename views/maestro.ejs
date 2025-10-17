@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Asistencia - Panel Docente</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/maestro.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1><i class="fas fa-chalkboard-teacher"></i> Panel Docente</h1>
+        <div class="user-info">
+            <span id="userName">Usuario: </span>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="alerts"></div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('asistencia')">Registro de Asistencia</button>
+            <button class="tab" onclick="showTab('historico')">Histórico</button>
+        </div>
+
+        <!-- Tab Registro de Asistencia -->
+        <div id="asistencia" class="tab-content active">
+            <h2 class="section-title">Registro de Asistencia</h2>
+            
+            <div class="view-controls">
+                <select id="selectGrupo" onchange="cargarAlumnosGrupo()">
+                    <option value="">Seleccionar grupo...</option>
+                </select>
+                <select id="selectMateria">
+                    <option value="">Seleccionar materia...</option>
+                </select>
+                <input type="date" id="fechaAsistencia" value="">
+            </div>
+            
+            <div id="registroAsistenciaContainer" class="hidden">
+                <h3>Lista de Alumnos</h3>
+                <form id="formAsistencia">
+                    <div id="listaAlumnos"></div>
+                    <button type="submit" class="btn-primary" style="max-width: 300px; margin-top: 20px;">
+                        <i class="fas fa-save"></i> Guardar Asistencia
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab Histórico -->
+        <div id="historico" class="tab-content">
+            <h2 class="section-title">Histórico de Asistencias</h2>
+            
+            <div class="view-controls">
+                <select id="selectGrupoHistorico" onchange="cargarHistorico()">
+                    <option value="">Seleccionar grupo...</option>
+                </select>
+                <input type="date" id="fechaDesde" value="">
+                <input type="date" id="fechaHasta" value="">
+                <button class="btn-primary" onclick="cargarHistorico()">
+                    <i class="fas fa-search"></i> Consultar
+                </button>
+            </div>
+            
+            <div id="historicoContainer">
+                <h3>Registro de Asistencias</h3>
+                <div id="historicoTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let maestroId;
+        let asignacionesDocente = [];
+        
+        // Cargar datos al inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!user.id || user.tipoUsuario !== 'maestro') {
+                window.location.href = '/';
+                return;
+            }
+            
+            maestroId = user.id;
+            document.getElementById('userName').textContent = `Usuario: ${user.nombre || 'Docente'}`;
+            
+            // Establecer fecha actual en los campos de fecha
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaAsistencia').value = today;
+            document.getElementById('fechaDesde').value = today;
+            document.getElementById('fechaHasta').value = today;
+            
+            // Cargar grupos del docente
+            cargarGruposDocente();
+        });
+        
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const tabButtons = document.querySelectorAll('.tab');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showAlert(message, type) {
+            const alertsDiv = document.getElementById('alerts');
+            alertsDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                alertsDiv.innerHTML = '';
+            }, 3000);
+        }
+        
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+        
+        // Cargar los grupos asignados al docente
+        async function cargarGruposDocente() {
+            try {
+                // Obtener asignaciones del maestro
+                const response = await fetch(`/api/asignaciones?id_maestro=${maestroId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Error al obtener asignaciones');
+                }
+                
+                asignacionesDocente = await response.json();
+                
+                console.log('Asignaciones del maestro:', asignacionesDocente);
+                
+                // Llenar selectores de grupos
+                const grupoSelect = document.getElementById('selectGrupo');
+                const grupoHistoricoSelect = document.getElementById('selectGrupoHistorico');
+                
+                grupoSelect.innerHTML = '<option value="">Seleccionar grupo...</option>';
+                grupoHistoricoSelect.innerHTML = '<option value="">Seleccionar grupo...</option>';
+                
+                if (asignacionesDocente.length === 0) {
+                    showAlert('No tienes grupos asignados. Contacta al administrador.', 'error');
+                    return;
+                }
+                
+                // Filtrar grupos únicos
+                const gruposUnicos = [...new Map(asignacionesDocente.map(item => 
+                    [item.id_grupo, { 
+                        id_grupo: item.id_grupo, 
+                        nombre_grupo: item.nombre_grupo, 
+                        nombre_carrera: item.nombre_carrera, 
+                        numero_semestre: item.numero_semestre 
+                    }]
+                )).values()];
+                
+                gruposUnicos.forEach(grupo => {
+                    const optionText = `${grupo.nombre_grupo} - ${grupo.nombre_carrera} (${grupo.numero_semestre}° Sem)`;
+                    
+                    grupoSelect.innerHTML += `<option value="${grupo.id_grupo}">${optionText}</option>`;
+                    grupoHistoricoSelect.innerHTML += `<option value="${grupo.id_grupo}">${optionText}</option>`;
+                });
+                
+            } catch (error) {
+                console.error('Error al cargar grupos del docente:', error);
+                showAlert('Error al cargar los grupos asignados', 'error');
+            }
+        }
+        
+        // Cargar materias del grupo seleccionado
+        function cargarMateriasGrupo() {
+            const grupoId = document.getElementById('selectGrupo').value;
+            const materiaSelect = document.getElementById('selectMateria');
+            
+            materiaSelect.innerHTML = '<option value="">Seleccionar materia...</option>';
+            
+            if (!grupoId) return;
+            
+            const materiasGrupo = asignacionesDocente.filter(a => a.id_grupo == grupoId);
+            
+            materiasGrupo.forEach(asignacion => {
+                materiaSelect.innerHTML += `<option value="${asignacion.id_materia}" data-asignacion="${asignacion.id_asignacion}">${asignacion.nombre_materia} (${asignacion.codigo_materia})</option>`;
+            });
+        }
+        
+        // Cargar alumnos del grupo seleccionado
+        async function cargarAlumnosGrupo() {
+            const grupoId = document.getElementById('selectGrupo').value;
+            cargarMateriasGrupo();
+            
+            if (!grupoId) {
+                document.getElementById('registroAsistenciaContainer').classList.add('hidden');
+                return;
+            }
+            
+            try {
+                // Obtener alumnos del grupo
+                const response = await fetch(`/api/alumnos/grupo/${grupoId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Error al obtener alumnos');
+                }
+                
+                const alumnos = await response.json();
+                
+                console.log('Alumnos del grupo:', alumnos);
+                
+                const listaAlumnos = document.getElementById('listaAlumnos');
+                listaAlumnos.innerHTML = '';
+                
+                if (alumnos.length === 0) {
+                    listaAlumnos.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No hay alumnos registrados en este grupo</p>';
+                    document.getElementById('registroAsistenciaContainer').classList.remove('hidden');
+                    return;
+                }
+                
+                let html = '<table class="data-table">';
+                html += '<tr><th>Foto</th><th>Matrícula</th><th>Nombre</th><th>Asistencia</th></tr>';
+                
+                alumnos.forEach(alumno => {
+                    const fotoHTML = alumno.foto_base64 
+                        ? `<img src="${alumno.foto_base64}" alt="Foto" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #667eea;">` 
+                        : '<i class="fas fa-user-circle" style="font-size: 50px; color: #ccc;"></i>';
+                    
+                    html += `<tr>
+                        <td style="text-align: center;">${fotoHTML}</td>
+                        <td><strong>${alumno.matricula}</strong></td>
+                        <td>${alumno.nombre_completo}</td>
+                        <td>
+                            <div style="display: flex; gap: 15px; justify-content: center;">
+                                <label style="cursor: pointer;">
+                                    <input type="radio" name="asistencia_${alumno.id_alumno}" value="asistencia" checked> 
+                                    <i class="fas fa-check-circle" style="color: #28a745;"></i> Asistencia
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="radio" name="asistencia_${alumno.id_alumno}" value="falta"> 
+                                    <i class="fas fa-times-circle" style="color: #dc3545;"></i> Falta
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="radio" name="asistencia_${alumno.id_alumno}" value="justificante"> 
+                                    <i class="fas fa-file-medical" style="color: #ffc107;"></i> Justificante
+                                </label>
+                            </div>
+                            <input type="hidden" name="id_alumno_${alumno.id_alumno}" value="${alumno.id_alumno}">
+                        </td>
+                    </tr>`;
+                });
+                
+                html += '</table>';
+                listaAlumnos.innerHTML = html;
+                
+                // Mostrar el contenedor de registro de asistencia
+                document.getElementById('registroAsistenciaContainer').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error al cargar alumnos:', error);
+                showAlert('Error al cargar la lista de alumnos', 'error');
+            }
+        }
+        
+        // Registrar asistencia
+        document.getElementById('formAsistencia').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const grupoId = document.getElementById('selectGrupo').value;
+            const materiaSelect = document.getElementById('selectMateria');
+            const materiaId = materiaSelect.value;
+            const fecha = document.getElementById('fechaAsistencia').value;
+            
+            if (!grupoId || !materiaId || !fecha) {
+                showAlert('Seleccione grupo, materia y fecha', 'error');
+                return;
+            }
+            
+            // Obtener id_asignacion del option seleccionado
+            const asignacionId = materiaSelect.options[materiaSelect.selectedIndex].dataset.asignacion;
+            
+            if (!asignacionId) {
+                showAlert('Error: No se pudo obtener la asignación', 'error');
+                return;
+            }
+            
+            // Preparar datos de asistencia
+            const asistencias = [];
+            const tabla = document.querySelector('#listaAlumnos table');
+            const filas = tabla.querySelectorAll('tr');
+            
+            // Omitir la fila de encabezados
+            for (let i = 1; i < filas.length; i++) {
+                const fila = filas[i];
+                const inputsRadio = fila.querySelectorAll('input[type="radio"]');
+                const alumnoId = fila.querySelector('input[type="hidden"]').value;
+                
+                let estado = 'asistencia'; // valor por defecto
+                inputsRadio.forEach(radio => {
+                    if (radio.checked) {
+                        estado = radio.value;
+                    }
+                });
+                
+                asistencias.push({
+                    id_alumno: parseInt(alumnoId),
+                    estado: estado,
+                    observaciones: null
+                });
+            }
+            
+            try {
+                // Registrar asistencias masivamente usando el endpoint correcto
+                const response = await fetch('/api/asistencias/registrar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id_asignacion: parseInt(asignacionId),
+                        fecha: fecha,
+                        asistencias: asistencias
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(`✅ ${data.message || 'Asistencia registrada correctamente'}`, 'success');
+                    
+                    // Limpiar formulario después de 2 segundos
+                    setTimeout(() => {
+                        document.getElementById('selectGrupo').value = '';
+                        document.getElementById('selectMateria').innerHTML = '<option value="">Seleccionar materia...</option>';
+                        document.getElementById('registroAsistenciaContainer').classList.add('hidden');
+                    }, 2000);
+                } else {
+                    showAlert(data.error || 'Error al registrar asistencia', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error al registrar asistencia:', error);
+                showAlert('Error de conexión con el servidor', 'error');
+            }
+        });
+        
+        // Cargar histórico de asistencias
+        async function cargarHistorico() {
+            const grupoId = document.getElementById('selectGrupoHistorico').value;
+            const fechaDesde = document.getElementById('fechaDesde').value;
+            const fechaHasta = document.getElementById('fechaHasta').value;
+            
+            if (!grupoId) {
+                showAlert('Seleccione un grupo para consultar', 'error');
+                return;
+            }
+            
+            try {
+                // Obtener asistencias del grupo
+                let url = `/api/asistencias?id_grupo=${grupoId}`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Error al obtener asistencias');
+                }
+                
+                let asistencias = await response.json();
+                
+                // Filtrar por fechas si están seleccionadas
+                if (fechaDesde && fechaHasta) {
+                    asistencias = asistencias.filter(a => {
+                        const fechaAsistencia = new Date(a.fecha);
+                        const desde = new Date(fechaDesde);
+                        const hasta = new Date(fechaHasta);
+                        return fechaAsistencia >= desde && fechaAsistencia <= hasta;
+                    });
+                }
+                
+                console.log('Asistencias filtradas:', asistencias);
+                
+                const historicoTable = document.getElementById('historicoTable');
+                
+                if (asistencias.length === 0) {
+                    historicoTable.innerHTML = '<p style="text-align: center; color: #666; padding: 30px;">No hay registros de asistencia para los filtros seleccionados</p>';
+                    return;
+                }
+                
+                let html = '<table class="data-table">';
+                html += '<tr><th>Fecha</th><th>Materia</th><th>Matrícula</th><th>Alumno</th><th>Estado</th><th>Hora</th></tr>';
+                
+                asistencias.forEach(registro => {
+                    let estadoClass = 'success';
+                    let estadoTexto = registro.estado;
+                    
+                    if (registro.estado === 'falta') {
+                        estadoClass = 'error';
+                        estadoTexto = 'Falta';
+                    } else if (registro.estado === 'justificante') {
+                        estadoClass = 'warning';
+                        estadoTexto = 'Justificante';
+                    } else {
+                        estadoTexto = 'Asistencia';
+                    }
+                    
+                    html += `<tr>
+                        <td>${new Date(registro.fecha).toLocaleDateString('es-MX')}</td>
+                        <td>${registro.nombre_materia}</td>
+                        <td><strong>${registro.matricula}</strong></td>
+                        <td>${registro.nombre_alumno}</td>
+                        <td><span class="badge ${estadoClass}">${estadoTexto}</span></td>
+                        <td>${registro.hora_registro ? registro.hora_registro.substring(0, 5) : '-'}</td>
+                    </tr>`;
+                });
+                
+                html += '</table>';
+                
+                // Agregar resumen
+                const totalAsistencias = asistencias.filter(a => a.estado === 'asistencia').length;
+                const totalFaltas = asistencias.filter(a => a.estado === 'falta').length;
+                const totalJustificantes = asistencias.filter(a => a.estado === 'justificante').length;
+                
+                html += `
+                    <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px;">
+                        <h4 style="color: #667eea; margin-bottom: 15px;">📊 Resumen</h4>
+                        <div style="display: flex; gap: 20px; justify-content: space-around;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: #28a745; font-weight: bold;">${totalAsistencias}</div>
+                                <div style="color: #666;">Asistencias</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: #dc3545; font-weight: bold;">${totalFaltas}</div>
+                                <div style="color: #666;">Faltas</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: #ffc107; font-weight: bold;">${totalJustificantes}</div>
+                                <div style="color: #666;">Justificantes</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: #667eea; font-weight: bold;">${asistencias.length}</div>
+                                <div style="color: #666;">Total Registros</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                historicoTable.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error al cargar histórico:', error);
+                showAlert('Error al cargar el histórico de asistencias', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+

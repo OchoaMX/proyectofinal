@@ -1,61 +1,81 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import perfumeRouter from "./router/perfumeRouter.js"; // Importamos el router de perfumes
-import authRouter from "./router/loginRouter.js";
+import apiRouter from "./router/apiRouter.js";
+import cors from "cors";
 
+// Configuración de la aplicación
+const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PORT = process.env.PORT || 4000;
 
-const app = express();
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Configuración de EJS
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views")); // Apunta solo a la carpeta views
+// Archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Middlewares con límites aumentados para imágenes grandes
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/bootstrap", express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
+// Configuración de vistas
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-// Configuramos las rutas de perfumes con un prefijo
-app.use("/perfumes", perfumeRouter);
+// Rutas API
+app.use('/api', apiRouter);
 
-// Ruta para el login
-app.get("/", (req, res) => {
-    res.render("login", { titulo: "Login Administrador" });
+// Rutas de vistas
+app.get('/', (req, res) => {
+    res.render('login');
 });
 
-// Ruta para el sitio web público
-app.get("/index", (req, res) => {
-    res.render("index", { titulo: "Platinum Perfumes" });
+// Ruta principal de admin (redirige a usuarios por defecto)
+app.get('/admin', (req, res) => {
+    res.redirect('/admin/usuarios');
 });
 
-app.get("/contacto", (req, res) => {
-    res.render("contacto", { titulo: "Contacto" });
+// Rutas específicas para cada sección del admin
+app.get('/admin/usuarios', (req, res) => {
+    res.render('usuarios', { currentPage: 'usuarios', cssFile: 'usuarios.css', jsFile: 'usuarios.js' });
 });
 
-app.get("/nosotros", (req, res) => {
-    res.render("nosotros", { titulo: "nosotros" });
+app.get('/admin/carreras', (req, res) => {
+    res.render('carreras', { currentPage: 'carreras', cssFile: 'carreras.css', jsFile: 'carreras.js' });
 });
 
-app.get("/productos", (req, res) => {
-    res.render("inicio", { titulo: "productos" });
+app.get('/admin/semestres', (req, res) => {
+    res.render('semestres', { currentPage: 'semestres', cssFile: 'semestres.css', jsFile: 'semestres.js' });
 });
 
-// Ruta para acceder directamente al panel de administrador
-app.get("/admin", (req, res) => {
-    res.redirect("/perfumes/admin");
-});
-app.get("/panel", (req, res) => {
-    res.render("panel", { titulo: "Contacto" });
+app.get('/admin/materias', (req, res) => {
+    res.render('materiasPlanes', { currentPage: 'materias', cssFile: 'materiasPlanes.css', jsFile: 'materiasPlanes.js' });
 });
 
-app.use('/api', authRouter); // Todas las rutas de auth empezarán con /api
+app.get('/admin/grupos', (req, res) => {
+    res.render('grupos', { currentPage: 'grupos', cssFile: 'grupos.css', jsFile: 'grupos.js' });
+});
 
-app.listen(80, () => {
-    console.log("Servidor corriendo en http://localhost:80");
-    console.log("Panel de administración en http://localhost/perfumes/admin");
-    console.log("API de perfumes disponible en http://localhost/perfumes/mostrar");
+app.get('/admin/alumnos', (req, res) => {
+    res.render('alumnos', { currentPage: 'alumnos', cssFile: 'alumnos.css', jsFile: 'alumnos.js' });
+});
+
+app.get('/admin/asignaciones', (req, res) => {
+    res.render('asignaciones', { currentPage: 'asignaciones', cssFile: 'asignaciones.css', jsFile: 'asignaciones.js' });
+});
+
+app.get('/admin/visualizar', (req, res) => {
+    res.render('visualizar', { currentPage: 'visualizar', cssFile: 'visualizar.css', jsFile: 'visualizar.js' });
+});
+
+app.get('/maestro', (req, res) => {
+    res.render('maestro');
+});
+
+// Importar logger
+import logger from "./utils/logger.js";
+
+// Iniciar servidor
+app.listen(PORT, () => {
+    logger.info(`Servidor corriendo en http://localhost:${PORT}`);
 });
